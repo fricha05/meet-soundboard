@@ -3,6 +3,7 @@
 const TAG_OUT = 'meet-soundboard';
 const TAG_IN = 'meet-soundboard-page';
 
+let debug = false;
 let pageStatus = { activeMics: 0, audio: 'none' };
 const sentToPage = new Set();
 
@@ -29,7 +30,7 @@ window.addEventListener('message', (event) => {
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
-  if (msg.type !== 'status') console.info('[Meet Soundboard] popup →', msg.type, msg.id ?? '');
+  if (debug && msg.type !== 'status') console.info('[Meet Soundboard] popup →', msg.type, msg.id ?? '');
   if (msg.type === 'play') playSound(msg.id);
   else if (msg.type === 'stop') toPage({ type: 'stop' });
   else if (msg.type === 'forget') {
@@ -40,9 +41,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
 
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.monitor) toPage({ type: 'monitor', on: changes.monitor.newValue });
+  if (changes.debug) {
+    debug = changes.debug.newValue === true;
+    toPage({ type: 'debug', on: debug });
+  }
 });
 
-loadSettings().then((settings) => toPage({ type: 'monitor', on: settings.monitor }));
+loadSettings().then((settings) => {
+  debug = settings.debug;
+  toPage({ type: 'monitor', on: settings.monitor });
+  toPage({ type: 'debug', on: debug });
+});
 
 // Alt+Shift+1..9 plays the matching sound, Alt+Shift+0 stops everything.
 // e.code is used because Alt changes the produced character on macOS.

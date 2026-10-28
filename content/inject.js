@@ -13,9 +13,14 @@
   let sfxOut = null;
   let monitor = null;
   let monitorOn = true;
+  let debug = false;
   const outputs = new Set();
   const prepared = new Map();
   const voices = new Set();
+
+  function trace(...args) {
+    if (debug) console.info('[Meet Soundboard]', ...args);
+  }
 
   // Sounds → bus → limiter → sfxOut → (monitor, every hooked mic).
   // The limiter only catches peaks, e.g. two sounds at once, so they never drown the voice or clip.
@@ -33,7 +38,7 @@
     monitor.connect(ctx.destination);
     ctx.onstatechange = report;
     if (sinkId) followSink(sinkId);
-    console.info('[Meet Soundboard] audio context', ctx.state);
+    trace('audio context', ctx.state);
   }
 
   // Meet plays the call on the speaker picked in its own settings, which may not be the system default.
@@ -104,7 +109,7 @@
     });
 
     ctx.resume();
-    console.info('[Meet Soundboard] mic hooked:', micTrack.label, '- audio context', ctx.state);
+    trace('mic hooked:', micTrack.label, '- audio context', ctx.state);
     report();
     return new MediaStream([mixed, ...stream.getVideoTracks()]);
   }
@@ -163,7 +168,7 @@
     const buffer = await ctx.decodeAudioData(data);
     const sound = { buffer, gain: await loudnessGain(buffer) };
     prepared.set(id, sound);
-    console.info('[Meet Soundboard] normalized', id, '×' + sound.gain.toFixed(2));
+    trace('normalized', id, '×' + sound.gain.toFixed(2));
     return sound;
   }
 
@@ -211,13 +216,15 @@
       if (typeof msg.id !== 'string') return;
       if (msg.data !== undefined && !(msg.data instanceof ArrayBuffer)) return;
       const volume = Math.min(MAX_VOLUME, Math.max(0, Number(msg.volume) || 0));
-      console.info('[Meet Soundboard] play', msg.id, '- audio context', ctx ? ctx.state : 'none', '- output', sinkId || 'default');
+      trace('play', msg.id, '- audio context', ctx ? ctx.state : 'none', '- output', sinkId || 'default');
       play({ id: msg.id, data: msg.data, volume })
         .catch((error) => console.warn('[Meet Soundboard] play failed', error));
     } else if (msg.type === 'stop') {
       stopAll();
     } else if (msg.type === 'forget') {
       prepared.delete(msg.id);
+    } else if (msg.type === 'debug') {
+      debug = msg.on === true;
     } else if (msg.type === 'monitor') {
       monitorOn = msg.on === true;
       if (monitor) monitor.gain.value = monitorOn ? 1 : 0;
