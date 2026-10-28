@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Meet Soundboard</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f6fa; --surface: #fff; --surface-2: #efeff5; --border: #e2e2ea;
+      --fg: #1c1b22; --muted: #6b6a78; --accent: #6d5dfc; --accent-soft: #6d5dfc1f;
+      --ok: #1f9d55; --ok-soft: #1f9d5518; --warn: #b7791f; --warn-soft: #b7791f18; --danger: #e5484d;
+      --shadow: 0 1px 2px #0000000d, 0 2px 8px #00000008;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16161b; --surface: #202027; --surface-2: #2a2a33; --border: #32323c;
+        --fg: #ececf1; --muted: #9b9aa8; --accent: #8b7dff; --accent-soft: #8b7dff26;
+        --ok: #4cc38a; --ok-soft: #4cc38a1f; --warn: #f0b955; --warn-soft: #f0b9551f; --danger: #ff6369;
+        --shadow: none;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { width: 360px; margin: 0; padding: 14px; font: 13px/1.35 system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); }
+    button { font: inherit; color: inherit; }
+    svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    header img { width: 32px; height: 32px; }
+    .title { flex: 1; min-width: 0; }
+    .title h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; padding: 1px 8px 1px 6px; border-radius: 99px; font-size: 11px; font-weight: 550; color: var(--muted); background: var(--surface-2); }
+    .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill.ok { color: var(--ok); background: var(--ok-soft); }
+    .pill.ok::before { animation: live 1.6s ease-in-out infinite; }
+    .pill.warn { color: var(--warn); background: var(--warn-soft); }
+    @keyframes live { 50% { opacity: .35; } }
+    #stop { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); cursor: pointer; font-weight: 550; box-shadow: var(--shadow); }
+    #stop:hover { color: #fff; background: var(--danger); border-color: var(--danger); }
+
+    #banner { margin: -2px 0 12px; padding: 8px 10px; border-radius: 9px; font-size: 12px; color: var(--warn); background: var(--warn-soft); }
+    #banner:empty { display: none; }
+
+    .search { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 0 10px; height: 36px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); transition: border-color .12s; }
+    .search:focus-within { border-color: var(--accent); }
+    .search svg.i { color: var(--muted); }
+    .search .go { width: 14px; height: 14px; opacity: 0; transition: opacity .12s; }
+    .search:focus-within .go { opacity: 1; }
+    .search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; color: var(--fg); font: inherit; outline: none; }
+    .search input::placeholder { color: var(--muted); }
+    .search input::-webkit-search-cancel-button { display: none; }
+
+    .results { margin: -4px 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+    .results-head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; }
+    #results-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #results-site { font-size: 11px; font-weight: 550; color: var(--accent); text-decoration: none; }
+    #results-site:hover { text-decoration: underline; }
+    #results-close { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+    #results-close:hover { color: var(--fg); background: var(--surface-2); }
+    #results-close svg.i { width: 14px; height: 14px; }
+    #results-list { max-height: 228px; margin: 0; padding: 4px; overflow-y: auto; list-style: none; }
+    .result { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 8px; border-radius: 8px; }
+    .result:hover { background: var(--surface-2); }
+    .dot { width: 10px; height: 10px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1px #0002; }
+    .result .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+    .result button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 26px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 600; }
+    .result button:hover { border-color: var(--accent); color: var(--accent); }
+    .result button:disabled { cursor: default; opacity: .7; }
+    .result button.listen { width: 26px; padding: 0; }
+    .result button.add-result { padding: 0 8px; }
+    .result button.added { color: var(--ok); border-color: transparent; background: var(--ok-soft); opacity: 1; }
+    .result button svg.i { width: 12px; height: 12px; }
+    #results-foot { padding: 0 8px 8px; font-size: 12px; color: var(--muted); text-align: center; }
+    #results-foot:empty { display: none; }
+    #results-foot button { width: 100%; height: 28px; border: 0; border-radius: 7px; background: var(--surface-2); color: var(--fg); cursor: pointer; font-size: 12px; font-weight: 550; }
+    #results-foot button:hover { color: var(--accent); }
+
+    #grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .tile { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 78px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); transition: border-color .12s, transform .12s; }
+    .tile:hover { border-color: var(--accent); }
+    .tile:has(.cover:active) { transform: scale(.97); }
+    .tile.playing { animation: hit .5s ease-out; }
+    @keyframes hit { 0% { box-shadow: 0 0 0 0 var(--accent); } 100% { box-shadow: 0 0 0 10px transparent; } }
+    .cover { position: absolute; inset: 0; border: 0; border-radius: inherit; background: none; cursor: pointer; }
+    .cover:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .emoji { font-size: 22px; line-height: 1; pointer-events: none; }
+    .name { font-size: 12px; font-weight: 550; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; pointer-events: none; }
+    .key { position: absolute; top: 8px; right: 8px; min-width: 18px; padding: 1px 5px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; font-size: 10px; font-weight: 600; text-align: center; color: var(--muted); background: var(--surface-2); pointer-events: none; }
+    .chip { align-self: flex-start; padding: 0 6px; border-radius: 99px; font-size: 10px; font-weight: 600; color: var(--accent); background: var(--accent-soft); pointer-events: none; }
+    .actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 1px; padding: 2px; border-radius: 8px; background: var(--surface); opacity: 0; transition: opacity .12s; }
+    .tile:hover .actions, .actions:focus-within, .tile.adjusting .actions { opacity: 1; }
+    .tile:hover .key, .tile.adjusting .key, .tile:focus-within .key { visibility: hidden; }
+    .tile.adjusting .chip { display: none; }
+    .actions button { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+    .actions button:hover { color: var(--fg); background: var(--surface-2); }
+    .actions button.danger:hover { color: var(--danger); }
+    .actions svg.i { width: 14px; height: 14px; }
+    .tile.editing .actions, .tile.editing .key { display: none; }
+    input.rename { position: relative; width: 100%; padding: 4px 6px; border: 1px solid var(--accent); border-radius: 6px; background: var(--surface-2); color: var(--fg); font: inherit; font-size: 12px; outline: none; }
+    .level { position: relative; display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--muted); }
+    .level input { flex: 1; min-width: 0; margin: 0; }
+
+    .add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 78px; border: 1.5px dashed var(--border); border-radius: 12px; color: var(--muted); font-size: 11px; font-weight: 550; text-align: center; cursor: pointer; transition: color .12s, border-color .12s; }
+    .add:hover { color: var(--accent); border-color: var(--accent); }
+    .add svg.i { width: 20px; height: 20px; }
+    .add input { display: none; }
+
+    .controls { margin-top: 12px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
+    .row { display: flex; align-items: center; gap: 10px; min-height: 38px; }
+    .row + .row { border-top: 1px solid var(--border); }
+    .row label { flex: 1; cursor: pointer; }
+    .row .value { width: 38px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+    .row svg.i { color: var(--muted); }
+    #volume { flex: 1; min-width: 0; margin: 0; }
+    input[type=range] { accent-color: var(--accent); }
+
+    .switch { position: relative; width: 34px; height: 20px; flex: none; }
+    .switch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+    .switch span { position: absolute; inset: 0; border-radius: 99px; background: var(--border); transition: background .15s; pointer-events: none; }
+    .switch span::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px #0003; transition: transform .15s; }
+    .switch input:checked + span { background: var(--accent); }
+    .switch input:checked + span::after { transform: translateX(14px); }
+    .switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .hint { margin-top: 10px; font-size: 11px; color: var(--muted); text-align: center; }
+    kbd { padding: 0 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; font: 600 10px system-ui, sans-serif; background: var(--surface); }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icons/icon-128.png" alt="">
+    <div class="title">
+      <h1>Meet Soundboard</h1>
+      <span id="pill" class="pill">…</span>
+    </div>
+    <button id="stop" title="Couper tous les sons (Alt+Shift+0)">
+      <svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop
+    </button>
+  </header>
+  <div id="banner"></div>
+
+  <form id="search" class="search" title="Chercher des sons sur Myinstants">
+    <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="search-input" type="search" placeholder="Chercher un son sur Myinstants…" aria-label="Chercher un son sur Myinstants" autocomplete="off">
+    <svg class="i go" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </form>
+
+  <section id="results" class="results" hidden>
+    <div class="results-head">
+      <span id="results-title"></span>
+      <a id="results-site" target="_blank" rel="noopener noreferrer" title="Ouvrir sur Myinstants">Myinstants ↗</a>
+      <button id="results-close" title="Fermer">
+        <svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <ul id="results-list"></ul>
+    <div id="results-foot"></div>
+  </section>
+
+  <div id="grid"></div>
+
+  <div class="controls">
+    <div class="row">
+      <svg class="i" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      <input id="volume" type="range" min="0" max="1.5" step="0.05" aria-label="Volume général">
+      <span id="volume-value" class="value"></span>
+    </div>
+    <div class="row">
+      <svg class="i" viewBox="0 0 24 24"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h3zM3 15a2 2 0 0 0 2 2h1v-5H3z"/></svg>
+      <label for="monitor">M'entendre aussi</label>
+      <span class="switch"><input id="monitor" type="checkbox"><span></span></span>
+    </div>
+  </div>
+  <div class="hint">Dans Meet : <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>…<kbd>9</kbd> pour jouer, <kbd>0</kbd> pour couper</div>
+
+  <script src="sounds.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
