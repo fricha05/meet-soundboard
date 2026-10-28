@@ -11,8 +11,8 @@ const BUILTIN_SOUNDS = [
 ];
 
 // `names` (renames) and `volumes` (per-sound level, 1 = unchanged) are keyed by sound id,
-// for built-in and imported sounds alike.
-const DEFAULT_SETTINGS = { volume: 0.8, monitor: true, sounds: [], names: {}, volumes: {} };
+// for built-in and imported sounds alike. `debug` turns on the [Meet Soundboard] traces in the Meet console.
+const DEFAULT_SETTINGS = { volume: 0.8, monitor: true, debug: false, sounds: [], names: {}, volumes: {} };
 
 function soundVolume(settings, id) {
   return settings.volume * (settings.volumes[id] ?? 1);

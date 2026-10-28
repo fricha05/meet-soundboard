@@ -1,42 +1,76 @@
 # Meet Soundboard
 
-Extension Chrome qui mixe des sons dans ton micro pendant un appel Google Meet. Rien à installer côté système : pas de micro virtuel, pas de BlackHole.
+[![CI](https://github.com/fricha05/meet-soundboard/actions/workflows/ci.yml/badge.svg)](https://github.com/fricha05/meet-soundboard/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/fricha05/meet-soundboard/actions/workflows/codeql.yml/badge.svg)](https://github.com/fricha05/meet-soundboard/actions/workflows/codeql.yml)
 
-## Installation
+A Chrome extension that plays sound effects straight into your microphone during a Google Meet call. Nothing to install on your system: no virtual audio device, no BlackHole.
 
-1. Ouvre `chrome://extensions` (marche aussi sur Edge, Brave et Arc).
-2. Active **Mode développeur** (en haut à droite).
-3. **Charger l'extension non empaquetée** → choisis ce dossier `meet-soundboard`.
-4. Recharge l'onglet Meet (ou ouvre-le après l'installation).
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/popup-dark.png">
+    <img src="docs/popup-light.png" alt="The Meet Soundboard popup: a search bar, a grid of sound tiles and the volume controls" width="360">
+  </picture>
+</p>
 
-## Utilisation
+The interface is in French.
 
-- Clique sur l'icône de l'extension pendant l'appel → clique un son.
-- Raccourcis dans l'onglet Meet : **Alt+Shift+1…9** joue le son n°1…9, **Alt+Shift+0** coupe tout.
-- **Recherche Myinstants** (barre en haut) : tape un mot-clé puis Entrée. ▶ écoute le son dans la popup, **Ajouter** le met dans ta soundboard.
-- **Ajouter un son** (dernière tuile) : importe tes mp3/wav/ogg. Ils sont gardés dans l'extension.
-- **Renommer** (✎ au survol) : un emoji en début de nom devient l'image de la tuile, par exemple « 😱 FAAAH ».
-- **Volume par son** (🔊 au survol) : retouche de 0 à 200 %, en plus du volume général.
-- **M'entendre aussi** : tu entends les sons dans tes écouteurs en même temps que les autres.
+## Install
 
-## Comment ça marche
+1. Download the latest zip from [Releases](https://github.com/fricha05/meet-soundboard/releases) and unzip it, or clone this repository.
+2. Open `chrome://extensions` (Edge, Brave and Arc work too) and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the unzipped folder, or the repository folder.
+4. Reload any open Meet tab.
 
-`inject.js` remplace `getUserMedia` dans la page Meet avant que Meet ne demande le micro. La piste audio rendue à Meet est un mix Web Audio : ton vrai micro + un bus où la soundboard joue ses sons. Meet envoie donc les deux aux participants.
+Chrome 111 or later is required.
 
-Chaque son est normalisé au chargement (volume perçu ramené à environ -20 LUFS), et un limiteur sur la sortie des sons évite qu'ils saturent ou couvrent ta voix.
+## Use
 
-## Limites
+- Click the extension icon during a call, then click a sound.
+- In the Meet tab, **Alt+Shift+1…9** plays sounds 1 to 9 and **Alt+Shift+0** stops everything.
+- **Search Myinstants** from the bar at the top: ▶ previews a sound in the popup only, **Ajouter** adds it to your soundboard.
+- **Ajouter un son**, the last tile, imports your own mp3, wav or ogg files.
+- Hover a tile to change its own volume (0 to 200 %), rename it or delete it. A name that starts with an emoji, like `😱 FAAAH`, uses that emoji as the tile picture.
+- **M'entendre aussi** plays the sounds in your own headphones as well.
 
-- Si tu te mets en **muet dans Meet**, les sons sont muets aussi : ils passent par la même piste.
-- L'extension doit être active **avant** que Meet ouvre le micro : recharge l'onglet après l'avoir installée.
-- Si tu changes de micro dans les réglages Meet, il redemande le micro et le nouveau est branché automatiquement.
-- La suppression de bruit de Meet peut atténuer certains sons (applaudissements, bruit blanc). Tu peux la couper dans Paramètres → Audio.
+## How it works
 
-## Sons intégrés
+`content/inject.js` runs in the Meet page before Meet asks for the microphone, and replaces `getUserMedia`. The audio track Meet receives is a Web Audio mix of your real microphone and the soundboard bus, so the other participants hear both.
 
-Les 7 sons de base sont des fichiers de [Myinstants](https://www.myinstants.com), rangés dans `sounds/` :
+Each sound is loudness-normalized when it is first played (about -20 LUFS), and a limiter on the soundboard bus keeps two sounds at once from clipping or drowning your voice.
 
-| Son | Fichier d'origine |
+| Folder | Role |
+|---|---|
+| `content/` | `inject.js` runs in the Meet page and owns the audio graph. `bridge.js` runs in the extension's isolated world and relays the popup and keyboard shortcuts to it. |
+| `popup/` | The toolbar popup. |
+| `shared/` | Settings and the built-in sound list, shared by the popup and the bridge. |
+| `sounds/` | The built-in sounds. |
+
+## Limitations
+
+- Muting yourself in Meet also mutes the sounds: they share the microphone track.
+- The extension must be active before Meet opens the microphone, so reload the Meet tab after installing it.
+- Meet's noise cancellation can soften some sounds such as applause. You can turn it off in Meet's audio settings.
+- The Myinstants search reads the site's HTML, so it breaks if Myinstants changes its pages.
+
+## Develop
+
+```bash
+npm ci --ignore-scripts
+npm run lint
+npm run package
+```
+
+`npm run package` builds `dist/meet-soundboard-<version>.zip` with only the files Chrome needs. The extension itself has no dependencies: npm is only used for ESLint.
+
+To see the `[Meet Soundboard]` traces in the Meet console, open the popup, right-click it, choose **Inspect**, and run `chrome.storage.local.set({ debug: true })` in its console.
+
+To publish a version, bump `version` in both `manifest.json` and `package.json`, then push a matching tag such as `v1.1.0`. The Release workflow builds the zip and attaches it to a GitHub release.
+
+## Built-in sounds
+
+The seven built-in sounds come from [Myinstants](https://www.myinstants.com):
+
+| Sound | Source file |
 |---|---|
 | 🔔 Ding | `/media/sounds/ding-sound-effect_2.mp3` |
 | 🎉 Tada | `/media/sounds/ta-da_yrvBrlS.mp3` |
@@ -46,8 +80,12 @@ Les 7 sons de base sont des fichiers de [Myinstants](https://www.myinstants.com)
 | 👏 Applause | `/media/sounds/applause-4.mp3` |
 | 🦗 Crickets | `/media/sounds/awkward-cricket-sound-effect_YK6dDJG.mp3` |
 
-Pour en changer un, remplace le fichier dans `sounds/` en gardant son nom, puis recharge l'extension.
+To swap one, replace its file in `sounds/` under the same name and reload the extension.
 
-## Licence
+## Security
 
-Le code est sous licence MIT (voir [LICENSE](LICENSE)). Les fichiers de `sounds/` viennent de Myinstants et n'en font pas partie : ils restent à leurs auteurs.
+See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
+## License
+
+The code is under the [MIT license](LICENSE). The files in `sounds/` come from Myinstants and are not covered by it: they belong to their authors.
