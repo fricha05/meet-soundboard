@@ -31,6 +31,7 @@ Chrome 111 or later is required.
 - **Ajouter un son**, the last tile, imports your own mp3, wav or ogg files.
 - Hover a tile to change its own volume (0 to 200 %), rename it or delete it. A name that starts with an emoji, like `😱 FAAAH`, uses that emoji as the tile picture.
 - **M'entendre aussi** plays the sounds in your own headphones as well.
+- **Couper le Son studio pendant les sons** turns Meet's Studio sound off just before a sound plays and back on once the last one ends. Studio sound filters out anything that isn't speech, applause included.
 
 ## How it works
 
@@ -40,7 +41,7 @@ Each sound is loudness-normalized when it is first played (about -20 LUFS), and 
 
 | Folder | Role |
 |---|---|
-| `content/` | `inject.js` runs in the Meet page and owns the audio graph. `bridge.js` runs in the extension's isolated world and relays the popup and keyboard shortcuts to it. |
+| `content/` | `inject.js` runs in the Meet page and owns the audio graph. `bridge.js` runs in the extension's isolated world and relays the popup and keyboard shortcuts to it. `studio.js` toggles Meet's Studio sound around the sounds. |
 | `popup/` | The toolbar popup. |
 | `shared/` | Settings and the built-in sound list, shared by the popup and the bridge. |
 | `sounds/` | The built-in sounds. |
@@ -49,7 +50,7 @@ Each sound is loudness-normalized when it is first played (about -20 LUFS), and 
 
 - Muting yourself in Meet also mutes the sounds: they share the microphone track.
 - The extension must be active before Meet opens the microphone, so reload the Meet tab after installing it.
-- Meet's noise cancellation can soften some sounds such as applause. You can turn it off in Meet's audio settings.
+- Meet's Studio sound runs on Google's servers and filters out anything that isn't speech, so it can soften sounds such as applause. **Couper le Son studio pendant les sons** handles it by clicking through Meet's settings dialog (hidden while it does), which delays each first sound by about half a second. A Meet redesign can break it, and closing the tab mid-sound leaves Studio sound off.
 - The Myinstants search reads the site's HTML, so it breaks if Myinstants changes its pages.
 
 ## Develop

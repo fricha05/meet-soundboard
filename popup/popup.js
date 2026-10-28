@@ -4,6 +4,7 @@ const bannerEl = document.getElementById('banner');
 const volumeEl = document.getElementById('volume');
 const volumeValueEl = document.getElementById('volume-value');
 const monitorEl = document.getElementById('monitor');
+const studioOffEl = document.getElementById('studio-off');
 
 const ICONS = {
   volume: '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>',
@@ -370,6 +371,7 @@ async function render() {
   volumeEl.value = settings.volume;
   showVolume();
   monitorEl.checked = settings.monitor;
+  studioOffEl.checked = settings.studioOff;
   grid.replaceChildren(
     ...allSounds(settings).map((sound, index) => soundTile(sound, index, index >= BUILTIN_SOUNDS.length)),
     addTile(),
@@ -382,6 +384,7 @@ volumeEl.addEventListener('input', () => {
   chrome.storage.local.set({ volume: Number(volumeEl.value) });
 });
 monitorEl.addEventListener('change', () => chrome.storage.local.set({ monitor: monitorEl.checked }));
+studioOffEl.addEventListener('change', () => chrome.storage.local.set({ studioOff: studioOffEl.checked }));
 
 render();
 refreshStatus();
