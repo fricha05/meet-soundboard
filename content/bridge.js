@@ -14,6 +14,7 @@ function toPage(msg, transfer = []) {
 async function playSound(id) {
   const settings = await loadSettings();
   const sound = allSounds(settings).find((s) => s.id === id);
+  if (settings.studioOff && pageStatus.activeMics > 0) await studio.suspend();
   if (!sound || sentToPage.has(id)) {
     toPage({ type: 'play', id, volume: soundVolume(settings, id) });
     return;
@@ -27,6 +28,7 @@ async function playSound(id) {
 window.addEventListener('message', (event) => {
   if (event.source !== window || event.origin !== location.origin || event.data?.source !== TAG_IN) return;
   if (event.data.type === 'status') pageStatus = { activeMics: event.data.active, audio: event.data.audio };
+  else if (event.data.type === 'voices' && event.data.count === 0) studio.release();
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
@@ -41,6 +43,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
 
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.monitor) toPage({ type: 'monitor', on: changes.monitor.newValue });
+  if (changes.studioOff?.newValue === false) studio.release();
   if (changes.debug) {
     debug = changes.debug.newValue === true;
     toPage({ type: 'debug', on: debug });

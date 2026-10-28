@@ -52,6 +52,7 @@
       ],
       "js": [
         "shared/settings.js",
+        "content/studio.js",
         "content/bridge.js"
       ],
       "run_at": "document_start"

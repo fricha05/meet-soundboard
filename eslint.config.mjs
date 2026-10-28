@@ -30,7 +30,12 @@ export default [
     languageOptions: { globals: sharedSettings },
   },
   {
-    files: ['shared/**/*.js'],
+    // content/studio.js is loaded the same way, just before bridge.js.
+    files: ['content/bridge.js'],
+    languageOptions: { globals: { studio: 'readonly' } },
+  },
+  {
+    files: ['shared/**/*.js', 'content/studio.js'],
     rules: { 'no-unused-vars': ['error', { vars: 'local' }] },
   },
   {

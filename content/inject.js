@@ -72,6 +72,11 @@
     }, location.origin);
   }
 
+  // Tells bridge.js when the last sound is over, so it can turn Meet's Studio sound back on.
+  function reportVoices() {
+    window.postMessage({ source: TAG_OUT, type: 'voices', count: voices.size }, location.origin);
+  }
+
   function wrap(stream) {
     const micTrack = stream.getAudioTracks()[0];
     if (!micTrack) return stream;
@@ -196,6 +201,7 @@
     src.onended = () => {
       gain.disconnect();
       voices.delete(voice);
+      reportVoices();
     };
     src.start(ctx.currentTime + 0.02);
   }
@@ -203,6 +209,7 @@
   function stopAll() {
     for (const voice of voices) voice.gain.disconnect();
     voices.clear();
+    reportVoices();
   }
 
   // Only bridge.js, which runs in this same window, may drive the soundboard. Without these checks
@@ -217,8 +224,10 @@
       if (msg.data !== undefined && !(msg.data instanceof ArrayBuffer)) return;
       const volume = Math.min(MAX_VOLUME, Math.max(0, Number(msg.volume) || 0));
       trace('play', msg.id, '- audio context', ctx ? ctx.state : 'none', '- output', sinkId || 'default');
+      // Reporting after every attempt also covers a sound that never started (blocked audio, bad file).
       play({ id: msg.id, data: msg.data, volume })
-        .catch((error) => console.warn('[Meet Soundboard] play failed', error));
+        .catch((error) => console.warn('[Meet Soundboard] play failed', error))
+        .finally(reportVoices);
     } else if (msg.type === 'stop') {
       stopAll();
     } else if (msg.type === 'forget') {
