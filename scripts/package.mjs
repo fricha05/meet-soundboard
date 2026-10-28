@@ -11,7 +11,7 @@ if (version !== packageVersion) {
   throw new Error(`manifest.json is at ${version} but package.json at ${packageVersion}`);
 }
 
-const tag = process.env.GITHUB_REF_NAME;
+const tag = process.env.RELEASE_TAG ?? process.env.GITHUB_REF_NAME;
 if (tag && tag.startsWith('v') && tag !== `v${version}`) {
   throw new Error(`tag ${tag} does not match manifest version ${version}`);
 }
